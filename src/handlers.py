@@ -21,7 +21,6 @@ async def start_command(update: Update, context: CallbackContext):
         )
 
 async def handle_admin_response(update: Update, context: CallbackContext):
-    user = update.effective_user
     text = update.message.text.lower()
     
     if text not in ['да', 'нет']:
