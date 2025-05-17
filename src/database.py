@@ -40,8 +40,9 @@ class Database:
                     user_id BIGINT PRIMARY KEY,
                     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
+                );
             ''')
+
             print("Table 'users' checked/created")
         except Error as e:
             print(f"Error creating table: {e}")
@@ -76,3 +77,4 @@ class Database:
             return False
         finally:
             cursor.close()
+
