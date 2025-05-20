@@ -44,8 +44,9 @@ class Database:
                     user_id BIGINT PRIMARY KEY,
                     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
+                );
             ''')
+
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS lesson (
                    id INT PRIMARY KEY AUTO_INCREMENT,
@@ -55,8 +56,8 @@ class Database:
                   paths_for_files  TEXT  
              )
             ''')
-            print("Table 'lesson' checked/create")
             print("Table 'users' checked/created")
+            print("Table 'lesson' checked/create")
         except Error as e:
             print(f"Error creating table: {e}")
             raise
