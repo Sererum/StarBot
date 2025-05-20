@@ -1,7 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
-from lesson import Lesson, LessonType
-from user_sender import UserSender
+from lesson_managers.lesson import Lesson, LessonType
+from senders.user_sender import UserSender
 import os
 
 class AdminSender(UserSender):
@@ -15,6 +15,16 @@ class AdminSender(UserSender):
             [InlineKeyboardButton("Добавить админа", callback_data="add_admin")],
             [InlineKeyboardButton("Удалить админа", callback_data="remove_admin")]
         ]
+
+    async def add_admin(self):
+        admin_list = []  # Логика получения списка админов
+        message = "Список администраторов:\n" + "\n".join(admin_list)
+        await self._send_message(message)
+
+    async def delete_admin(self):
+        admin_list = []  # Логика получения списка админов
+        message = "Список администраторов:\n" + "\n".join(admin_list)
+        await self._send_message(message)
 
     async def get_admin(self):
         admin_list = []  # Логика получения списка админов
@@ -48,7 +58,3 @@ class AdminSender(UserSender):
     async def replace_hw_by_id(self, hw_id: int):
         # Логика замены ДЗ
         await self._send_message(f"ДЗ #{hw_id} успешно заменено")
-
-    async def show_admin_panel(self):
-        message = "⚙️ Панель администратора:"
-        await self._send_message(message, self._get_admin_actions_keyboard())

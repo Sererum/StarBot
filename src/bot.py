@@ -1,16 +1,22 @@
 import logging
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
-from config import BOT_TOKEN
+from config.config import BOT_TOKEN
 from handlers import Handler 
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    level=logging.DEBUG
 )
 
 def main():
-    app = Application.builder().token(BOT_TOKEN).build()
     handler = Handler()
+    app = (
+        Application
+        .builder()
+        .token(BOT_TOKEN)
+        .post_init(handler.register_default_commands)  # :contentReference[oaicite:0]{index=0}
+        .build()
+    )
     
     # Регистрация обработчиков
     app.add_handler(MessageHandler(filters.COMMAND, handler.commands_handler))

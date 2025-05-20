@@ -6,8 +6,12 @@ class LessonType(Enum):
     LECT = "Лекция"
     LAB = "Лабораторная"
     PRACT = "Практика"
+    COURSE = "Курсовая работа"
+    DIF = "Дифзачет" 
+    TEST = "Зачет"
+    CONS = "Консультация"
+    EXAM = "Экзамен"
     UNDEF = "???"
-
 
 class Lesson:
     def __init__(
@@ -34,6 +38,8 @@ class Lesson:
         unique_str = f"{self.title}-{self.date}-{self.time}"
         self.id = int(hashlib.sha256(unique_str.encode()).hexdigest(), 16) & ((1 << 63) - 1)
 
+    def __str__(self) -> str:
+        return f"id: {self.id}, {self.title}, {self.lesson_type.value}, {self.date}, {self.time}. HW: {self.has_hw} - {self.hw_text}, file: {self.has_file} - {self.file_path}"
 
     # Getters and setters
     def get_id(self) -> int:
