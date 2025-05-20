@@ -2,6 +2,7 @@ from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import CallbackContext
 from database import Database
 from config import MYSQL_CONFIG
+from src.compositor import Compositor
 
 
 async def start_command(update: Update, context: CallbackContext):
@@ -63,6 +64,18 @@ async def handle_message(update: Update, context: CallbackContext):
     if text == 'удалить':
         with Database(MYSQL_CONFIG) as db:
             db.removeHWLastWeek()
+        return
+    if text == 'чтото':
+        with Compositor() as comp:  # Создаем экземпляр Compositor
+            comp.mergeListsScheduleHWToday()  # Вызываем метод
+        return
+    if text == 'чтото1':
+        with Compositor() as comp:
+            comp.mergeListsScheduleHWTomorrow()
+        return
+    if text == 'чтото2':
+        with Compositor() as comp:
+            comp.mergeListsScheduleHWWeek()
         return
     if user_data:
         status = 'админ' if user_data['is_admin'] else 'не админ'

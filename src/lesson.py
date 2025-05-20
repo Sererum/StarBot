@@ -1,5 +1,6 @@
 from enum import Enum
 import hashlib
+from datetime import datetime
 
 class LessonType(Enum):
     LECT = "Лекция"
@@ -7,22 +8,32 @@ class LessonType(Enum):
     PRACT = "Практика"
     UNDEF = "???"
 
+
 class Lesson:
-    def __init__(self, title: str, lesson_type: LessonType, date: str, time_str: str,
-                 has_hw: bool = False, hw_text: str = None,
-                 has_file: bool = False, file_path: str = None):
-        self.title = title
+    def __init__(
+            self,
+            title: str = None,  # Необязательный (по умолчанию None)
+            lesson_type: LessonType = LessonType.UNDEF,  # По умолчанию "???"
+            date: str = None,  # Можно установить текущую дату
+            time_str: str = None,  # Можно установить текущее время
+            has_hw: bool = False,  # Уже необязательный
+            hw_text: str = None,  # Уже необязательный
+            has_file: bool = False,  # Уже необязательный
+            file_path: str = None  # Уже необязательный
+    ):
+        self.title = title or "Без названия"  # Если None, заменяем на "Без названия"
         self.lesson_type = lesson_type
-        self.date = date  # YYYY-MM-DD
-        self.time = time_str  # HH:MM
+        self.date = date or datetime.now().strftime("%Y-%m-%d")  # Текущая дата, если не задана
+        self.time = time_str or datetime.now().strftime("%H:%M")  # Текущее время, если не задано
         self.has_hw = has_hw
         self.hw_text = hw_text
         self.has_file = has_file
-        self.file_path = file_path 
+        self.file_path = file_path
 
-        # Generate deterministic ID based on title + timestamp
-        unique_str = f"{title}-{self.date}-{self.time}"
-        self.id = int(hashlib.sha256(unique_str.encode()).hexdigest(), 16) & ((1<<63)-1)
+        # Генерация ID (если title=None, всё равно сработает)
+        unique_str = f"{self.title}-{self.date}-{self.time}"
+        self.id = int(hashlib.sha256(unique_str.encode()).hexdigest(), 16) & ((1 << 63) - 1)
+
 
     # Getters and setters
     def get_id(self) -> int:

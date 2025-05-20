@@ -103,17 +103,10 @@ class Database:
                    """
                 cursor.execute(query, (today,))
                 lessons = cursor.fetchall()
-                response = "📅 Уроки на сегодня:\n\n"
-
+                less = []
                 for lesson in lessons:
-                    response += f"📖 <b>{lesson[1]}</b>\n"  # lesson_name (индекс 1)
-                    response += f"📝 {lesson[3]}\n"  # lesson_description (индекс 3)
-
-                    if lesson[4]:  # paths_for_files (индекс 4)
-                        response += f"📎 Файлы: {lesson[4]}\n"
-
-                    response += "\n"
-                return response
+                    less.append(Lesson(title=lesson[1], hw_text=lesson[3], file_path=lesson[4]))
+                return less
         except Error as err:
             print(f"Ошибка при получении данных: {err}")
             return []
@@ -129,17 +122,11 @@ class Database:
                       """
                 cursor.execute(query, (tomorrow,))
                 lessons = cursor.fetchall()
-                response = "📅 Уроки на сегодня:\n\n"
-
+                less = []
                 for lesson in lessons:
-                    response += f"📖 <b>{lesson[1]}</b>\n"  # lesson_name (индекс 1)
-                    response += f"📝 {lesson[3]}\n"  # lesson_description (индекс 3)
+                    less.append(Lesson(title=lesson[1], hw_text=lesson[3], file_path=lesson[4]))
 
-                    if lesson[4]:  # paths_for_files (индекс 4)
-                        response += f"📎 Файлы: {lesson[4]}\n"
-
-                    response += "\n"
-                return response
+                return less
         except Error as err:
             print(f"Ошибка при получении данных: {err}")
             return []
@@ -166,53 +153,15 @@ class Database:
                 """
                 cursor.execute(query, (monday, sunday))
                 lessons = cursor.fetchall()
-
-                # Инициализируем структуру для хранения уроков по дням
-                week_lessons = {
-                    'Понедельник': [],
-                    'Вторник': [],
-                    'Среда': [],
-                    'Четверг': [],
-                    'Пятница': [],
-                    'Суббота': [],
-                    'Воскресенье': []
-                }
-
-                # Распределяем уроки по дням недели
+                less = []
                 for lesson in lessons:
-                    try:
-                        day_num = lesson['date'].weekday()
-                        day_name = list(week_lessons.keys())[day_num]
-                        week_lessons[day_name].append(lesson)
-                    except (KeyError, IndexError) as e:
-                        print(f"Ошибка обработки урока: {e}")
-                        continue
-
-                response = "📅 Уроки на текущую неделю:\n\n"
-
-                # Русские названия дней недели
-                days_translation = {
-                    'Monday': 'Понедельник',
-                    'Tuesday': 'Вторник',
-                    'Wednesday': 'Среда',
-                    'Thursday': 'Четверг',
-                    'Friday': 'Пятница',
-                    'Saturday': 'Суббота',
-                    'Sunday': 'Воскресенье'
-                }
-
-                for day, lessons in week_lessons.items():
-                    day_name = days_translation.get(day, day)
-                    response += f"📌 <b>{day_name}</b>\n"
-
-                    for lesson in lessons:
-                        response += f"   📖 {lesson['lesson_name']}\n"
-                        response += f"   📝 {lesson['lesson_description']}\n"
-                        if lesson['paths_for_files']:
-                            response += f"   📎 Файлы: {lesson['paths_for_files']}\n"
-                        response += "\n"
-
-                return response
+                    less.append(Lesson(
+                        title=lesson.get('lesson_name'),
+                        date=lesson.get('date'),
+                        hw_text=lesson.get('lesson_description'),
+                        file_path=lesson.get('paths_for_files')
+                    ))
+                return less
 
         except Error as err:
             print(f"Ошибка при работе с базой данных: {err}")
@@ -242,54 +191,15 @@ class Database:
                        """
                 cursor.execute(query, (next_monday, next_sunday))
                 lessons = cursor.fetchall()
-
-                # Инициализируем структуру для хранения уроков по дням
-                week_lessons = {
-                    'Понедельник': [],
-                    'Вторник': [],
-                    'Среда': [],
-                    'Четверг': [],
-                    'Пятница': [],
-                    'Суббота': [],
-                    'Воскресенье': []
-                }
-
-                # Распределяем уроки по дням недели
+                less = []
                 for lesson in lessons:
-                    try:
-                        day_num = lesson['date'].weekday()
-                        day_name = list(week_lessons.keys())[day_num]
-                        week_lessons[day_name].append(lesson)
-                    except (KeyError, IndexError) as e:
-                        print(f"Ошибка обработки урока: {e}")
-                        continue
-
-                response = "📅 Уроки на текущую неделю:\n\n"
-
-                # Русские названия дней недели
-                days_translation = {
-                    'Monday': 'Понедельник',
-                    'Tuesday': 'Вторник',
-                    'Wednesday': 'Среда',
-                    'Thursday': 'Четверг',
-                    'Friday': 'Пятница',
-                    'Saturday': 'Суббота',
-                    'Sunday': 'Воскресенье'
-                }
-
-                for day, lessons in week_lessons.items():
-                    day_name = days_translation.get(day, day)
-                    response += f"📌 <b>{day_name}</b>\n"
-
-                    for lesson in lessons:
-                        response += f"   📖 {lesson['lesson_name']}\n"
-                        response += f"   📝 {lesson['lesson_description']}\n"
-                        if lesson['paths_for_files']:
-                            response += f"   📎 Файлы: {lesson['paths_for_files']}\n"
-                        response += "\n"
-
-                return response
-
+                    less.append(Lesson(
+                        title=lesson.get('lesson_name'),
+                        date=lesson.get('date'),
+                        hw_text=lesson.get('lesson_description'),
+                        file_path=lesson.get('paths_for_files')
+                    ))
+                return less
         except Error as err:
             print(f"Ошибка при работе с базой данных: {err}")
             return {}
