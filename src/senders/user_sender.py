@@ -88,7 +88,7 @@ class UserSender:
                 with open(lesson.file_path, 'rb') as f:
                     if ext in ('jpg', 'jpeg', 'png'):
                         await self.update.effective_chat.send_photo(photo=f, caption=text)
-                    elif ext in ('pdf', 'docx'):
+                    elif ext in ('pdf', 'docx', 'txt'):
                         await self.update.effective_chat.send_document(document=f, caption=text)
                     else:
                         await self.update.effective_chat.send_message(f"{text}\n\n⚠️ Неподдерживаемый формат файла")
