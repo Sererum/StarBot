@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from lesson_managers.compositor import Compositor
 from lesson_managers.database import Database 
 from lesson_managers.lesson import Lesson, LessonType
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
 from telegram.ext import CallbackContext
 import logging
 import os
@@ -23,6 +23,10 @@ class UserSender:
             4: "пятница",
             5: "суббота",
             6: "воскресенье"
+        }
+        self.available_ext = {
+            "photo": ['jpeg', 'png', 'jpg'],
+            "file": ['pdf', 'txt', 'docx', 'xls']
         }
 
     async def _send_message(self, text: str, keyboard: list = None):
@@ -76,20 +80,21 @@ class UserSender:
             await self.update.effective_chat.send_message("Домашнее задание не найдено")
             return
 
-        text = (
-            f"📚 ДЗ по {lesson.title}\n\n"
-            f"📃 Текст задания:\n{lesson.hw_text}\n\n"
-            f"📅 Дедлайн: {lesson.date} {lesson.time}"
-        )
+        text = f"📚 ДЗ по {lesson.title}\n\n"
+        if len(lesson.hw_text) != 0:
+            text += f"📃 Текст задания:\n{lesson.hw_text}\n\n"
+        text += f"📅 Дедлайн: {lesson.date} {lesson.time}"
 
         if lesson.has_file and lesson.file_path:
             ext = lesson.file_path.split('.')[-1].lower()
             try:
                 with open(lesson.file_path, 'rb') as f:
-                    if ext in ('jpg', 'jpeg', 'png'):
-                        await self.update.effective_chat.send_photo(photo=f, caption=text)
-                    elif ext in ('pdf', 'docx', 'txt'):
-                        await self.update.effective_chat.send_document(document=f, caption=text)
+                    filename = lesson.title + "." + lesson.date + "." + ext
+                    file = InputFile(f, filename)
+                    if ext in self.available_ext['photo']:
+                        await self.update.effective_chat.send_photo(photo=file, caption=text)
+                    elif ext in self.available_ext['file']:
+                        await self.update.effective_chat.send_document(document=file, caption=text)
                     else:
                         await self.update.effective_chat.send_message(f"{text}\n\n⚠️ Неподдерживаемый формат файла")
             except FileNotFoundError:

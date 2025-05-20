@@ -93,5 +93,6 @@ class Compositor:
             if getattr(hw, 'file_path', None):
                 lesson.set_file_path(hw.file_path)
                 lesson.has_file = True
+                lesson.has_hw = True
 
         return lessons

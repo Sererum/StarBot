@@ -1,4 +1,4 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
 from telegram.ext import CallbackContext
 from lesson_managers.lesson import Lesson, LessonType
 from senders.user_sender import UserSender
@@ -45,11 +45,10 @@ class AdminSender(UserSender):
             )
             return
 
-        text = (
-            f"📚 ДЗ по {lesson.title}\n\n"
-            f"📃 Текст задания:\n{lesson.hw_text}\n\n"
-            f"📅 Дедлайн: {lesson.date} {lesson.time}"
-        )
+        text = f"📚 ДЗ по {lesson.title}\n\n"
+        if len(lesson.hw_text) != 0:
+            text += f"📃 Текст задания:\n{lesson.hw_text}\n\n"
+        text += f"📅 Дедлайн: {lesson.date} {lesson.time}"
 
         keyboard = [[
                     InlineKeyboardButton(
@@ -62,12 +61,14 @@ class AdminSender(UserSender):
             ext = lesson.file_path.split('.')[-1].lower()
             try:
                 with open(lesson.file_path, 'rb') as f:
-                    if ext in ('jpg', 'jpeg', 'png'):
-                        await self.update.effective_chat.send_photo(photo=f, caption=text, reply_markup=markup)
-                    elif ext in ('pdf', 'docx'):
-                        await self.update.effective_chat.send_document(document=f, caption=text, reply_markup=markup)
+                    filename = lesson.title + "." + lesson.date + "." + ext
+                    file = InputFile(f, filename)
+                    if ext in self.available_ext['photo']:
+                        await self.update.effective_chat.send_photo(photo=file, caption=text, reply_markup=markup)
+                    elif ext in self.available_ext['file']:
+                        await self.update.effective_chat.send_document(document=file, caption=text, reply_markup=markup)
                     else:
-                        await self.update.effective_chat.send_message(f"{text}\n\n⚠️ Неподдерживаемый формат файла", reply_markup=markup)
+                        await self.update.effective_chat.send_message(f"{text}\n\n⚠️ Неподдерживаемый формат файла")
             except FileNotFoundError:
                 await self.update.effective_chat.send_message(f"{text}\n\n⚠️ Файл не найден", reply_markup=markup)
         else:

@@ -209,11 +209,12 @@ class Database:
                     """
                 )
                 rows = cursor.fetchall()
+
                 return [Lesson(
                     title=row.get('lesson_name'),
                     date=row.get('date'),
                     time_str=str(row.get('time')),
-                    has_hw=bool(row.get('text_of_hw')),
+                    has_hw=(bool(row.get('text_of_hw')) or bool(row.get('path_for_file'))),
                     hw_text=row.get('text_of_hw'),
                     has_file=bool(row.get('path_for_file')),
                     file_path=row.get('path_for_file'),
@@ -245,7 +246,7 @@ class Database:
                     time=row['time'],
                     hw_text=row['text_of_hw'] or "",
                     file_path=row['path_for_file'] or "",
-                    has_hw=bool(row['text_of_hw']),
+                    has_hw=(bool(row.get('text_of_hw')) or bool(row.get('path_for_file'))),
                     has_file=bool(row['path_for_file']),
                     is_longterm=bool(row['is_longterm'])
                 )
@@ -295,7 +296,7 @@ class Database:
                     title=row.get('lesson_name'),
                     date=row.get('date'),
                     time_str=str(row.get('time')),
-                    has_hw=bool(row.get('text_of_hw')),
+                    has_hw=(bool(row.get('text_of_hw')) or bool(row.get('path_for_file'))),
                     hw_text=row.get('text_of_hw'),
                     has_file=bool(row.get('path_for_file')),
                     file_path=row.get('path_for_file'),
