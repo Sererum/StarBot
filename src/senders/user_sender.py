@@ -1,10 +1,12 @@
-import os
-import logging
+from config.config import MYSQL_CONFIG
 from datetime import datetime, timedelta
+from lesson_managers.compositor import Compositor
+from lesson_managers.database import Database 
+from lesson_managers.lesson import Lesson, LessonType
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
-from lesson_managers.lesson import Lesson, LessonType
-from lesson_managers.compositor import Compositor
+import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -60,38 +62,40 @@ class UserSender:
                     f"{lesson.time}\t{lesson.title}\n"
                     f"{'\t' * 11}{lesson.lesson_type.value}\n\n"
                 )
-                if lesson.has_hw:
+                if lesson.lesson_type in [LessonType.PRACT, LessonType.LAB]:
                     keyboard.append([
                         InlineKeyboardButton(
                             text=f"ДЗ: {lesson.title}",
-                            callback_data=f"hw_{lesson.title}_{lesson.date}"
+                            callback_data=f"hw_{lesson.id}"
                         )
                     ])
         await self._send_message(message, keyboard)
 
     async def show_homework(self, lesson: Lesson):
         if not lesson or not lesson.has_hw:
-            await self._send_message("Домашнее задание не найдено")
+            await self.update.effective_chat.send_message("Домашнее задание не найдено")
             return
+
         text = (
             f"📚 ДЗ по {lesson.title}\n\n"
             f"📃 Текст задания:\n{lesson.hw_text}\n\n"
             f"📅 Дедлайн: {lesson.date} {lesson.time}"
         )
+
         if lesson.has_file and lesson.file_path:
             ext = lesson.file_path.split('.')[-1].lower()
             try:
                 with open(lesson.file_path, 'rb') as f:
                     if ext in ('jpg', 'jpeg', 'png'):
-                        await self.update.message.reply_photo(photo=f, caption=text)
+                        await self.update.effective_chat.send_photo(photo=f, caption=text)
                     elif ext in ('pdf', 'docx'):
-                        await self.update.message.reply_document(document=f, caption=text)
+                        await self.update.effective_chat.send_document(document=f, caption=text)
                     else:
-                        await self._send_message(f"{text}\n\n⚠️ Неподдерживаемый формат файла")
+                        await self.update.effective_chat.send_message(f"{text}\n\n⚠️ Неподдерживаемый формат файла")
             except FileNotFoundError:
-                await self._send_message(f"{text}\n\n⚠️ Файл не найден")
+                await self.update.effective_chat.send_message(f"{text}\n\n⚠️ Файл не найден")
         else:
-            await self._send_message(text)
+            await self.update.effective_chat.send_message(text)
 
     # Методы с логикой Compositor
     async def show_schedule_today(self):
@@ -117,6 +121,10 @@ class UserSender:
         start, end = self._get_week_range(start_next)
         header = f"📅 Следующая неделя ({start} - {end}):\n"
         await self.show_schedule(lessons, header)
+
+    async def show_hw_by_id(self, hw_id: int):
+        lesson = self.compositor.getHWbyID(hw_id)
+        await self.show_homework(lesson)
 
     async def show_hw_week(self):
         lessons = self.compositor.mergeListsScheduleHWWeek()

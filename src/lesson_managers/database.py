@@ -3,6 +3,7 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import datetime, timedelta
 from lesson_managers.lesson import Lesson
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ class Database:
         '''
         create_lesson = '''
             CREATE TABLE IF NOT EXISTS lesson (
-                id INT PRIMARY KEY AUTO_INCREMENT,
+                id BIGINT PRIMARY,
                 lesson_name VARCHAR(100) NOT NULL,
                 date DATE NOT NULL,
                 text_of_hw TEXT,
@@ -70,17 +71,22 @@ class Database:
     def addHW(self, lesson: Lesson) -> int:
         try:
             with self.connection.cursor() as cursor:
+                print(f"db: {str(lesson)}")
                 cursor.execute(
                     """
-                    INSERT INTO lesson (lesson_name, date, text_of_hw, path_for_file)
-                    VALUES (%s, %s, %s, %s)
+                    INSERT INTO lesson (id, lesson_name, date, text_of_hw, path_for_file)
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE 
+                        id = VALUES(id),
+                        text_of_hw = VALUES(text_of_hw),
+                        path_for_file = VALUES(path_for_file)
                     """, 
                     (lesson.title, lesson.date, lesson.hw_text, lesson.file_path)
                 )
-                logger.info(f"Added lesson '{lesson.title}' with ID {cursor.lastrowid}")
+                logger.info(f"Added/updated lesson '{lesson.title}' with ID {cursor.lastrowid}")
                 return cursor.lastrowid
         except Error as e:
-            logger.error(f"Error adding lesson: {e}")
+            logger.error(f"Error adding/updating lesson: {e}")
             self.connection.rollback()
             return None
 
@@ -190,6 +196,34 @@ class Database:
         except Error as e:
             logger.error(f"Error fetching admins: {e}")
             return []
+
+    def getHWbyID(self, hw_id: int) -> Optional[Lesson]:
+        try:
+            with self.connection.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    """
+                    SELECT id, lesson_name, date, text_of_hw, path_for_file
+                    FROM lesson
+                    WHERE id = %s
+                    """,
+                    (hw_id,)
+                )
+                row = cursor.fetchone()
+                if not row:
+                    return None
+
+                return Lesson(
+                    id=row['id'],
+                    title=row['lesson_name'],
+                    date=row['date'],
+                    hw_text=row['text_of_hw'] or "",
+                    file_path=row['path_for_file'] or "",
+                    has_hw=bool(row['text_of_hw']),
+                    has_file=bool(row['path_for_file'])
+                )
+        except Error as e:
+            logger.error(f"Error fetching HW by id={hw_id}: {e}")
+            return None
 
     def getListHWForToday(self) -> list[Lesson]:
         today = datetime.now().date()

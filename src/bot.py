@@ -20,7 +20,8 @@ def main():
     
     # Регистрация обработчиков
     app.add_handler(MessageHandler(filters.COMMAND, handler.commands_handler))
-    app.add_handler(MessageHandler(filters.TEXT, handler.text_handler))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handler.text_handler))
+    app.add_handler(MessageHandler(filters.Document.ALL, handler.handle_hw_files))
     app.add_handler(CallbackQueryHandler(handler.callbacks_handler))
     
     # Запуск бота

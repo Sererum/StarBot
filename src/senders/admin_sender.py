@@ -26,35 +26,37 @@ class AdminSender(UserSender):
         message = "Список администраторов:\n" + "\n".join(admin_list)
         await self._send_message(message)
 
-    async def get_admin(self):
-        admin_list = []  # Логика получения списка админов
-        message = "Список администраторов:\n" + "\n".join(admin_list)
-        await self._send_message(message)
+    async def show_homework(self, lesson: Lesson):
+        keyboard = [[
+                    InlineKeyboardButton(
+                        text="✍️ Добавить ДЗ",
+                        callback_data=f"add_hw_{lesson.id}"
+        )]]
+        markup = InlineKeyboardMarkup(keyboard) if keyboard else None
+        if not lesson or not lesson.has_hw:
+            await self.update.effective_chat.send_message(
+                text="Домашнее задание не найдено",
+                reply_markup=markup
+            )
+            return
 
-    async def get_hw_week(self):
-        hw_list = []  # Логика получения ДЗ на неделю
-        message = "ДЗ на текущую неделю:\n" + "\n".join(hw_list)
-        await self._send_message(message)
+        text = (
+            f"📚 ДЗ по {lesson.title}\n\n"
+            f"📃 Текст задания:\n{lesson.hw_text}\n\n"
+            f"📅 Дедлайн: {lesson.date} {lesson.time}"
+        )
 
-    async def get_hw_next_week(self):
-        hw_list = []  # Логика получения ДЗ на след. неделю
-        message = "ДЗ на следующую неделю:\n" + "\n".join(hw_list)
-        await self._send_message(message)
-
-    async def get_hw_by_id(self, hw_id: int):
-        lesson = None 
-        if lesson and lesson.has_hw:
-            await self.show_homework(lesson)
+        if lesson.has_file and lesson.file_path:
+            ext = lesson.file_path.split('.')[-1].lower()
+            try:
+                with open(lesson.file_path, 'rb') as f:
+                    if ext in ('jpg', 'jpeg', 'png'):
+                        await self.update.effective_chat.send_photo(photo=f, caption=text)
+                    elif ext in ('pdf', 'docx'):
+                        await self.update.effective_chat.send_document(document=f, caption=text)
+                    else:
+                        await self.update.effective_chat.send_message(f"{text}\n\n⚠️ Неподдерживаемый формат файла")
+            except FileNotFoundError:
+                await self.update.effective_chat.send_message(f"{text}\n\n⚠️ Файл не найден")
         else:
-            await self._send_message("ДЗ не найдено")
-
-    async def edit_hw_by_id(self, hw_id: int):
-        keyboard = [
-            [InlineKeyboardButton("Изменить текст", callback_data=f"edit_text_{hw_id}")],
-            [InlineKeyboardButton("Изменить файл", callback_data=f"edit_file_{hw_id}")]
-        ]
-        await self._send_message("Выберите действие:", keyboard)
-
-    async def replace_hw_by_id(self, hw_id: int):
-        # Логика замены ДЗ
-        await self._send_message(f"ДЗ #{hw_id} успешно заменено")
+            await self.update.effective_chat.send_message(text)

@@ -11,6 +11,15 @@ class Compositor:
         self.config = config or MYSQL_CONFIG
         self.api_client = APIClient()
 
+    def getHWbyID(self, hw_id: int) -> Lesson: 
+        lessons = []
+        lessons.extend(self.mergeListsScheduleHWWeek())
+        lessons.extend(self.mergeListsScheduleHWNextWeek())
+        for lesson in lessons:
+            if lesson.id == hw_id:
+                return lesson
+        return None
+
     def mergeListsScheduleHWToday(self) -> list[Lesson]:
         return self._merge(
             api_method=self.api_client.getListLessonsForToday,
