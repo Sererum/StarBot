@@ -18,24 +18,26 @@ class Lesson:
             self,
             title: str = None,  # Необязательный (по умолчанию None)
             lesson_type: LessonType = LessonType.UNDEF,  # По умолчанию "???"
-            date: str = None,  # Можно установить текущую дату
-            time_str: str = None,  # Можно установить текущее время
-            has_hw: bool = False,  # Уже необязательный
-            hw_text: str = None,  # Уже необязательный
-            has_file: bool = False,  # Уже необязательный
-            file_path: str = None  # Уже необязательный
+            date: str = None,
+            time_str: str = None,
+            has_hw: bool = False,
+            hw_text: str = None,
+            has_file: bool = False,
+            file_path: str = None,
+            is_longterm: bool = False
     ):
         self.title = title or "Без названия"  # Если None, заменяем на "Без названия"
         self.lesson_type = lesson_type
-        self.date = date or datetime.now().strftime("%Y-%m-%d")  # Текущая дата, если не задана
-        self.time = time_str or datetime.now().strftime("%H:%M")  # Текущее время, если не задано
+        self.date = date
+        self.time = time_str[:5]
         self.has_hw = has_hw
         self.hw_text = hw_text
         self.has_file = has_file
         self.file_path = file_path
+        self.is_longterm = is_longterm 
 
         # Генерация ID (если title=None, всё равно сработает)
-        unique_str = f"{self.title}-{self.date}-{self.time}"
+        unique_str = f"{self.title}-{self.date}-{self.time}-{self.is_longterm}"
         self.id = int(hashlib.sha256(unique_str.encode()).hexdigest(), 16) & ((1 << 63) - 1)
 
     def __str__(self) -> str:

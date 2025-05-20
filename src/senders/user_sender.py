@@ -98,6 +98,16 @@ class UserSender:
             await self.update.effective_chat.send_message(text)
 
     # Методы с логикой Compositor
+    async def show_longterm_hw(self):
+        lessons = self.compositor.getLongtermHW()
+        hw_lessons = [l for l in lessons if l.has_hw]
+        if not hw_lessons:
+            await self._send_message("📚 На текущей неделе нет домашних заданий")
+            return
+        await self._send_message("📚 Домашние задания на текущую неделю:")
+        for lesson in hw_lessons:
+            await self.show_homework(lesson)
+
     async def show_schedule_today(self):
         lessons = self.compositor.mergeListsScheduleHWToday()
         logger.info(lessons)
@@ -124,6 +134,7 @@ class UserSender:
 
     async def show_hw_by_id(self, hw_id: int):
         lesson = self.compositor.getHWbyID(hw_id)
+        logger.info(f"user_sender: {str(lesson)}")
         await self.show_homework(lesson)
 
     async def show_hw_week(self):

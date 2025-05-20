@@ -26,6 +26,11 @@ class AdminSender(UserSender):
         message = "Список администраторов:\n" + "\n".join(admin_list)
         await self._send_message(message)
 
+    async def add_longterm_hw(self):
+        admin_list = []  # Логика получения списка админов
+        message = "Список администраторов:\n" + "\n".join(admin_list)
+        await self._send_message(message)
+
     async def show_homework(self, lesson: Lesson):
         keyboard = [[
                     InlineKeyboardButton(
@@ -46,17 +51,24 @@ class AdminSender(UserSender):
             f"📅 Дедлайн: {lesson.date} {lesson.time}"
         )
 
+        keyboard = [[
+                    InlineKeyboardButton(
+                        text="✍️ Изменить ДЗ",
+                        callback_data=f"add_hw_{lesson.id}"
+        )]]
+        markup = InlineKeyboardMarkup(keyboard) if keyboard else None
+
         if lesson.has_file and lesson.file_path:
             ext = lesson.file_path.split('.')[-1].lower()
             try:
                 with open(lesson.file_path, 'rb') as f:
                     if ext in ('jpg', 'jpeg', 'png'):
-                        await self.update.effective_chat.send_photo(photo=f, caption=text)
+                        await self.update.effective_chat.send_photo(photo=f, caption=text, reply_markup=markup)
                     elif ext in ('pdf', 'docx'):
-                        await self.update.effective_chat.send_document(document=f, caption=text)
+                        await self.update.effective_chat.send_document(document=f, caption=text, reply_markup=markup)
                     else:
-                        await self.update.effective_chat.send_message(f"{text}\n\n⚠️ Неподдерживаемый формат файла")
+                        await self.update.effective_chat.send_message(f"{text}\n\n⚠️ Неподдерживаемый формат файла", reply_markup=markup)
             except FileNotFoundError:
-                await self.update.effective_chat.send_message(f"{text}\n\n⚠️ Файл не найден")
+                await self.update.effective_chat.send_message(f"{text}\n\n⚠️ Файл не найден", reply_markup=markup)
         else:
-            await self.update.effective_chat.send_message(text)
+            await self.update.effective_chat.send_message(text, reply_markup=markup)

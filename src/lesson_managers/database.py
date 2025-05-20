@@ -49,12 +49,13 @@ class Database:
         '''
         create_lesson = '''
             CREATE TABLE IF NOT EXISTS lesson (
-                id BIGINT PRIMARY,
+                id BIGINT PRIMARY KEY,
                 lesson_name VARCHAR(100) NOT NULL,
                 date DATE NOT NULL,
+                time TIME NOT NULL,
                 text_of_hw TEXT,
-                is_long_term BOOLEAN,
-                path_for_file TEXT
+                path_for_file TEXT,
+                is_longterm BOOLEAN DEFAULT FALSE
             );
         '''
         try:
@@ -74,14 +75,14 @@ class Database:
                 print(f"db: {str(lesson)}")
                 cursor.execute(
                     """
-                    INSERT INTO lesson (id, lesson_name, date, text_of_hw, path_for_file)
-                    VALUES (%s, %s, %s, %s, %s)
+                    INSERT INTO lesson (id, lesson_name, date, time, text_of_hw, path_for_file, is_longterm)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                     ON DUPLICATE KEY UPDATE 
                         id = VALUES(id),
                         text_of_hw = VALUES(text_of_hw),
                         path_for_file = VALUES(path_for_file)
                     """, 
-                    (lesson.title, lesson.date, lesson.hw_text, lesson.file_path)
+                    (lesson.id, lesson.title, lesson.date, lesson.time, lesson.hw_text, lesson.file_path, lesson.is_longterm)
                 )
                 logger.info(f"Added/updated lesson '{lesson.title}' with ID {cursor.lastrowid}")
                 return cursor.lastrowid
@@ -197,12 +198,38 @@ class Database:
             logger.error(f"Error fetching admins: {e}")
             return []
 
+    def getLongtermHW(self) -> list[Lesson]:
+        try:
+            with self.connection.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    """
+                    SELECT id, lesson_name, date, time, text_of_hw, path_for_file, is_longterm
+                    FROM lesson
+                    WHERE is_longterm = TRUE 
+                    """
+                )
+                rows = cursor.fetchall()
+                return [Lesson(
+                    title=row.get('lesson_name'),
+                    date=row.get('date'),
+                    time_str=str(row.get('time')),
+                    has_hw=bool(row.get('text_of_hw')),
+                    hw_text=row.get('text_of_hw'),
+                    has_file=bool(row.get('path_for_file')),
+                    file_path=row.get('path_for_file'),
+                    is_longterm=bool(row.get('is_longterm'))
+                ) for row in rows] 
+
+        except Error as e:
+            logger.error(f"Error fetching HW is longterm ={hw_id}: {e}")
+            return None
+
     def getHWbyID(self, hw_id: int) -> Optional[Lesson]:
         try:
             with self.connection.cursor(dictionary=True) as cursor:
                 cursor.execute(
                     """
-                    SELECT id, lesson_name, date, text_of_hw, path_for_file
+                    SELECT id, lesson_name, date, time, text_of_hw, path_for_file, is_longterm
                     FROM lesson
                     WHERE id = %s
                     """,
@@ -213,13 +240,14 @@ class Database:
                     return None
 
                 return Lesson(
-                    id=row['id'],
                     title=row['lesson_name'],
                     date=row['date'],
+                    time=row['time'],
                     hw_text=row['text_of_hw'] or "",
                     file_path=row['path_for_file'] or "",
                     has_hw=bool(row['text_of_hw']),
-                    has_file=bool(row['path_for_file'])
+                    has_file=bool(row['path_for_file']),
+                    is_longterm=bool(row['is_longterm'])
                 )
         except Error as e:
             logger.error(f"Error fetching HW by id={hw_id}: {e}")
@@ -251,7 +279,7 @@ class Database:
 
     def _fetch_hw_by_date_range(self, start_date, end_date) -> list[Lesson]:
         query = '''
-            SELECT lesson_name, date, text_of_hw, path_for_file
+            SELECT id, lesson_name, date, time, text_of_hw, path_for_file, is_longterm
             FROM lesson
             WHERE date BETWEEN %s AND %s
             ORDER BY date
@@ -263,12 +291,21 @@ class Database:
             with self.connection.cursor(dictionary=True) as cursor:
                 cursor.execute(query, (start_date, end_date))
                 rows = cursor.fetchall()
-                return [Lesson(
+                lessons = [Lesson(
                     title=row.get('lesson_name'),
                     date=row.get('date'),
+                    time_str=str(row.get('time')),
+                    has_hw=bool(row.get('text_of_hw')),
                     hw_text=row.get('text_of_hw'),
-                    file_path=row.get('path_for_file')
-                ) for row in rows]
+                    has_file=bool(row.get('path_for_file')),
+                    file_path=row.get('path_for_file'),
+                    is_longterm=bool(row.get('is_longterm'))
+                ) for row in rows] 
+                print("\t\t\t", lessons)
+                if (lessons):
+                    print("\t\t\t", lessons[0])
+                return lessons 
+
         except Error as e:
             logger.error(f"Error fetching HW from {start_date} to {end_date}: {e}")
             return []

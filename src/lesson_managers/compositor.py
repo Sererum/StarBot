@@ -17,6 +17,7 @@ class Compositor:
         lessons.extend(self.mergeListsScheduleHWNextWeek())
         for lesson in lessons:
             if lesson.id == hw_id:
+                print(f"LESSON: {str(lesson)}")
                 return lesson
         return None
 
@@ -44,30 +45,44 @@ class Compositor:
             db_method=lambda db: db.getListHWForNextWeek()
         )
 
+    def getLongtermHW(self) -> list[Lesson]:
+        return self.db.getLongtermHW();
+
     def _merge(self, api_method, db_method) -> list[Lesson]:
         # 1. Получаем расписание из API
         try:
             lessons = api_method()
-            logger.debug(f"API returned {len(lessons)} lessons")
+            logger.info(f"API returned {len(lessons)} lessons")
         except Exception as e:
             logger.error(f"API error: {e}")
             return []
 
         # 2. Получаем домашки из базы
+        hw_list = []
         try:
             with Database(self.config) as db:
                 hw_list = db_method(db) or []
-                logger.debug(f"DB returned {len(hw_list)} HW items")
+                print("\t\t\t", hw_list)
+                if (hw_list):
+                    print("\t\t\t", str(hw_list[0]))
+                logger.info(f"DB returned {len(hw_list)} HW items")
         except Exception as e:
             logger.error(f"Database error: {e}")
             hw_list = []
 
         # 3. Строим словарь по ключу = уникальный id урока
-        hw_dict = { hw.id: hw for hw in hw_list if hasattr(hw, 'id') }
+        print(3)
+        print(hw_list)
+        hw_dict = {}
+        for hw in hw_list:
+            hw_dict[hw.id] = hw;
+        print(hw_dict)
 
         # 4. Пробегаем по расписанию и «пришиваем» ДЗ по id
         for lesson in lessons:
+            print(str(lesson))
             hw = hw_dict.get(lesson.id)
+            print(str(hw))
             if not hw:
                 continue
             # если в БД есть текст — ставим дома

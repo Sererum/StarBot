@@ -115,10 +115,8 @@ class Handler:
         if file_path:
             lesson = self.compositor.getHWbyID(hw_id)
             if lesson:
-                print(file_path)
-                print(str(lesson))
                 lesson.file_path = file_path
-                print(str(lesson))
+                lesson.hw_text = update.message.caption 
                 self.db.addHW(lesson)
 
             await update.message.reply_text("Файл к домашнему заданию сохранён!")
@@ -191,6 +189,7 @@ class Handler:
             "schedule_tomorrow": sender.show_schedule_tomorrow,
             "schedule_week": sender.show_schedule_week,
             "schedule_next_week": sender.show_schedule_next_week,
+            "show_longterm": sender.show_longterm_hw,
             "hw_on_week": sender.show_hw_week,
             "hw_next_week": sender.show_hw_next_week,
             "add_admin": sender.add_admin if is_admin else None,
